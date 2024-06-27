@@ -1,3 +1,6 @@
+import csv
+import json
+
 from RouteVar import *
 
 
@@ -33,7 +36,15 @@ class RouteVarQuery:
         lst = [route_var for route_var in self.RouteVar_list if route_var.getRunningTime() == runningTime]
         return lst
 
-    def outputAsCSV():
-        raise NotImplementedError
-    def outputAsJSON():
-        raise NotImplementedError
+    def outputAsCSV(list):
+        with open('output.csv', 'w', newline = '') as csvfile:
+            fileout = csv.writer(csvfile)
+            fileout.writerow(['RouteID', 'RouteVarID', 'RouteVarName', 'RouteShortName', 'StartStop', 'EndStop', 'Distance', 'Outbound', 'RunningTime'])
+            for query in list:
+                fileout.writerow([query.RouteID, query.RouteVarID, query.RouteVarName, query.RouteShortName, query.StartStop, query.EndStop, query.Distance, query.Outbound, query.RunningTime])
+
+    def outputAsJSON(list):
+        for query in list:
+            json_object = json.dumps(query)
+            with open('output.json', 'w') as fileout:
+                fileout.write(json_object)
