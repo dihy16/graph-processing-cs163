@@ -21,6 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="RouteVarQuery.py" />
     <Compile Include="RouteVar.py" />
     <Compile Include="_23125036_src.py" />
   </ItemGroup>
