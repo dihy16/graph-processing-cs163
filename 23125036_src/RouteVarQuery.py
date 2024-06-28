@@ -1,8 +1,6 @@
 import csv
 import json
 
-from RouteVar import *
-
 
 class RouteVarQuery:
     def __init__(self, route_var_list):
@@ -45,7 +43,7 @@ class RouteVarQuery:
         return lst
 
     def outputAsCSV(query_list):
-        with open('output.csv', 'w', newline='') as fileout:
+        with open('route_var_output.csv', 'w', newline='') as fileout:
             fieldnames = ['RouteID', 'RouteVarID', 'RouteVarName', 'RouteShortName', 'StartStop', 'EndStop', 'Distance', 'Outbound', 'RunningTime']
             csv_writer = csv.DictWriter(fileout, fieldnames=fieldnames)
             csv_writer.writeheader()
@@ -53,7 +51,7 @@ class RouteVarQuery:
                 csv_writer.writerow(query)
 
     def outputAsJSON(query_list):
-        with open('output.json', 'w') as fileout:
+        with open('route_var_output.json', 'w') as fileout:
             for query in query_list:
                 json.dump(query, fileout)
                 fileout.write('\n')
