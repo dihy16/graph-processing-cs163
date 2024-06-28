@@ -1,6 +1,7 @@
 import csv
 import json
 
+from RouteVar import RouteVar
 
 class RouteVarQuery:
     def __init__(self, route_var_list):
@@ -44,7 +45,16 @@ class RouteVarQuery:
 
     def outputAsCSV(query_list):
         with open('route_var_output.csv', 'w', newline='') as fileout:
-            fieldnames = ['RouteID', 'RouteVarID', 'RouteVarName', 'RouteShortName', 'StartStop', 'EndStop', 'Distance', 'Outbound', 'RunningTime']
+            fieldnames = ['RouteID', 
+                          'RouteVarID', 
+                          'RouteVarName', 
+                          'RouteShortName', 
+                          'StartStop', 
+                          'EndStop', 
+                          'Distance', 
+                          'Outbound', 
+                          'RunningTime'
+                          ]
             csv_writer = csv.DictWriter(fileout, fieldnames=fieldnames)
             csv_writer.writeheader()
             for query in query_list:
@@ -55,3 +65,22 @@ class RouteVarQuery:
             for query in query_list:
                 json.dump(query, fileout)
                 fileout.write('\n')
+                
+    def inputFromJSON():
+        with open('vars.json', 'r') as fileout:
+            query_list = json.load(fileout)
+            route_var_list = []
+            for line in query_list:
+                route_var_list.append(RouteVar(line['RouteID'], 
+                                               line['RouteVarID'], 
+                                               line['RouteVarName'], 
+                                               line['RouteVarShortName'], 
+                                               line['RouteNo'], 
+                                               line['StartStop'], 
+                                               line['EndStop'], 
+                                               line['Distance'], 
+                                               line['Outbound'], 
+                                               line['RunningTime']
+                                               )
+                                     )         
+            return route_var_list
