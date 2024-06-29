@@ -21,6 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Graph.py" />
     <Compile Include="Path.py" />
     <Compile Include="PathQuery.py" />
     <Compile Include="StopQuery.py" />
