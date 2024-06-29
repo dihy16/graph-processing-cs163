@@ -1,13 +1,14 @@
 import csv
 import json
 
+from Stop import Stop
 
 class StopQuery:
     def __init__(self, stop_list):
         self.stop_list = stop_list
         
-    def searchByStopID(self, stopID):
-        lst = [stop for stop in self.stop_list if stop.getStopID() == stopID]
+    def searchByStopId(self, stopId):
+        lst = [stop for stop in self.stop_list if stop.getStopID() == stopId]
         return lst
     
     def searchByCode(self, code):
@@ -62,16 +63,52 @@ class StopQuery:
         lst = [stop for stop in self.stop_list if stop.getRoutes() == routes]
         return lst
 
-    def outputAsCSV(query_list):
-        with open('stop_output.csv', 'w', newline='') as fileout:
-            fieldnames = ['StopID', 'Code', 'Name', 'StopType', 'Zone', 'Ward', 'AddressNo', 'Street', 'SupportDisability', 'Status', 'Lng', 'Lat', 'Search', 'Routes']
+    def outputAsCSV(self, query_list, filename):
+        with open(filename, 'w', encoding='utf8', newline='') as fileout:
+            fieldnames = ['StopId', 
+                          'Code', 
+                          'Name', 
+                          'StopType', 
+                          'Zone', 
+                          'Ward', 
+                          'AddressNo', 
+                          'Street', 
+                          'SupportDisability', 
+                          'Status', 
+                          'Lng', 
+                          'Lat', 
+                          'Search', 
+                          'Routes'
+                          ]
             csv_writer = csv.DictWriter(fileout, fieldnames=fieldnames)
             csv_writer.writeheader()
             for query in query_list:
                 csv_writer.writerow(query.__dict__)
 
-    def outputAsJSON(query_list):
-        with open('stop_output.json', 'w') as fileout:
+    def outputAsJSON(self, query_list, filename):
+        with open(filename, 'w', encoding='utf8') as fileout:
             for query in query_list:
-                json.dump(query.__dict__, fileout)
+                json.dump(query.__dict__, fileout, ensure_ascii=False)
                 fileout.write('\n')
+                
+    def inputFromJSON(self, filename):
+        with open(filename, 'r', encoding='utf8') as filein:
+            for line in filein:
+                line = line.strip()
+                query = json.loads(line)
+                self.stop_list.append(Stop(query['StopId'], 
+                                          query['Code'], 
+                                          query['Name'], 
+                                          query['StopType'], 
+                                          query['Zone'], 
+                                          query['Ward'], 
+                                          query['AddressNo'], 
+                                          query['Street'], 
+                                          query['SupportDisability'], 
+                                          query['Status'], 
+                                          query['Lng'], 
+                                          query['Lat'], 
+                                          query['Search'], 
+                                          query['Routes']
+                                          )
+                                    )

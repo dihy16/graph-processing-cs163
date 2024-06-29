@@ -1,6 +1,6 @@
 class Stop:
-    def __init__(self, StopID, Code, Name, StopType, Zone, Ward, AddressNo, Street, SupportDisability, Status, Lng, Lat, Search, Routes):
-        self.StopID = StopID
+    def __init__(self, StopId, Code, Name, StopType, Zone, Ward, AddressNo, Street, SupportDisability, Status, Lng, Lat, Search, Routes):
+        self.StopId = StopId
         self.Code = Code
         self.Name = Name
         self.StopType = StopType
@@ -15,11 +15,11 @@ class Stop:
         self.Search = Search
         self.Routes = Routes
 
-    def getStopID(self):
-        return self.StopID
+    def getStopId(self):
+        return self.StopId
 
-    def setStopID(self, StopID):
-        self.StopID = StopID
+    def setStopId(self, StopId):
+        self.StopId = StopId
 
     def getCode(self):
         return self.Code

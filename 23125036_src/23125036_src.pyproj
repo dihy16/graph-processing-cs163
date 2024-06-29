@@ -21,9 +21,16 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Path.py" />
+    <Compile Include="PathQuery.py" />
+    <Compile Include="StopQuery.py" />
+    <Compile Include="Stop.py" />
     <Compile Include="RouteVarQuery.py" />
     <Compile Include="RouteVar.py" />
     <Compile Include="_23125036_src.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="data\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

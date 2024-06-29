@@ -1,0 +1,2 @@
+{"RouteId": 35, "RouteVarId": 69, "RouteVarName": "Lượt đi: Bến xe Chợ Lớn - Ngã 3 Tân Vạn", "RouteVarShortName": "Ngã 3 Tân Vạn", "RouteNo": "150", "StartStop": "Bến xe Chợ Lớn", "EndStop": "Tân Vạn", "Distance": 35094.0, "Outbound": true, "RunningTime": 80}
+{"RouteId": 35, "RouteVarId": 70, "RouteVarName": "Lượt về: Ngã 3 Tân Vạn - Bến xe Chợ Lớn", "RouteVarShortName": "Bến xe buýt Chợ Lớn", "RouteNo": "150", "StartStop": "Tân Vạn", "EndStop": "Bến xe Chợ Lớn", "Distance": 28835.0, "Outbound": false, "RunningTime": 80}

@@ -1,9 +1,9 @@
 class Path:
-    def __init__(self, Lat, Lng, RouteID, RouteVarID):
+    def __init__(self, Lat, Lng, RouteId, RouteVarId):
         self.Lat = Lat
         self.Lng = Lng
-        self.RouteID = RouteID
-        self.RouteVarID = RouteVarID
+        self.RouteId = RouteId
+        self.RouteVarId = RouteVarId
 
     def getLat(self):
         return self.Lat
@@ -17,14 +17,14 @@ class Path:
     def setLng(self, Lng):
         self.Lng = Lng
 
-    def getRouteID(self):
-        return self.RouteID
+    def getRouteId(self):
+        return self.RouteId
 
-    def setRouteID(self, RouteID):
-        self.RouteID = RouteID
+    def setRouteId(self, RouteId):
+        self.RouteId = RouteId
 
-    def getRouteVarID(self):
-        return self.RouteVarID
+    def getRouteVarId(self):
+        return self.RouteVarId
 
-    def setRouteVarID(self, RouteVarID):
-        self.RouteVarID = RouteVarID
+    def setRouteVarId(self, RouteVarId):
+        self.RouteVarId = RouteVarId
