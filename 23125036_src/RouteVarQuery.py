@@ -7,12 +7,12 @@ class RouteVarQuery:
     def __init__(self, route_var_list):
         self.RouteVar_list = route_var_list
         
-    def searchByRouteID(self, routeID):
-        lst = [route_var for route_var in self.RouteVar_list if route_var.getRouteID() == routeID]
+    def searchByRouteId(self, routeId):
+        lst = [route_var for route_var in self.RouteVar_list if route_var.getRouteId() == routeId]
         return lst
     
-    def searchByRouteVarID(self, routeVarID):
-        lst = [route_var for route_var in self.RouteVar_list if route_var.getRouteVarID() == routeVarID]
+    def searchByRouteVarId(self, routeVarId):
+        lst = [route_var for route_var in self.RouteVar_list if route_var.getRouteVarId() == routeVarId]
         return lst
     
     def searchByRouteVarName(self, routeVarName):
@@ -43,12 +43,13 @@ class RouteVarQuery:
         lst = [route_var for route_var in self.RouteVar_list if route_var.getRunningTime() == runningTime]
         return lst
 
-    def outputAsCSV(query_list):
-        with open('route_var_output.csv', 'w', newline='') as fileout:
-            fieldnames = ['RouteID', 
-                          'RouteVarID', 
+    def outputAsCSV(self, query_list, filename):
+        with open(filename, 'w', encoding='utf8', newline='') as fileout:
+            fieldnames = ['RouteId', 
+                          'RouteVarId', 
                           'RouteVarName', 
-                          'RouteShortName', 
+                          'RouteVarShortName', 
+                          'RouteNo',
                           'StartStop', 
                           'EndStop', 
                           'Distance', 
@@ -58,29 +59,29 @@ class RouteVarQuery:
             csv_writer = csv.DictWriter(fileout, fieldnames=fieldnames)
             csv_writer.writeheader()
             for query in query_list:
-                csv_writer.writerow(query)
+                csv_writer.writerow(query.__dict__)
 
-    def outputAsJSON(query_list):
-        with open('route_var_output.json', 'w') as fileout:
+    def outputAsJSON(self, query_list, filename):
+        with open(filename, 'w', encoding='utf8') as fileout:
             for query in query_list:
-                json.dump(query, fileout)
+                json.dump(query.__dict__, fileout, ensure_ascii=False)
                 fileout.write('\n')
-                
-    def inputFromJSON():
-        with open('vars.json', 'r') as fileout:
-            query_list = json.load(fileout)
-            route_var_list = []
-            for line in query_list:
-                route_var_list.append(RouteVar(line['RouteID'], 
-                                               line['RouteVarID'], 
-                                               line['RouteVarName'], 
-                                               line['RouteVarShortName'], 
-                                               line['RouteNo'], 
-                                               line['StartStop'], 
-                                               line['EndStop'], 
-                                               line['Distance'], 
-                                               line['Outbound'], 
-                                               line['RunningTime']
-                                               )
-                                     )         
-            return route_var_list
+     
+    def inputFromJSON(self, filename):
+        with open(filename, 'r', encoding='utf8') as filein:
+            for line in filein:
+                line = line.strip()
+                query = json.loads(line)
+                for obj in query:
+                    self.RouteVar_list.append(RouteVar(obj['RouteId'], 
+                                                   obj['RouteVarId'], 
+                                                   obj['RouteVarName'], 
+                                                   obj['RouteVarShortName'], 
+                                                   obj['RouteNo'], 
+                                                   obj['StartStop'], 
+                                                   obj['EndStop'], 
+                                                   obj['Distance'], 
+                                                   obj['Outbound'], 
+                                                   obj['RunningTime']
+                                                   )
+                                         )         

@@ -1,7 +1,7 @@
 class RouteVar:
-    def __init__(self, RouteID, RouteVarID, RouteVarName, RouteVarShortName, RouteNo, StartStop, EndStop, Distance, Outbound, RunningTime):
-        self.RouteID = RouteID
-        self.RouteVarID = RouteVarID
+    def __init__(self, RouteId, RouteVarId, RouteVarName, RouteVarShortName, RouteNo, StartStop, EndStop, Distance, Outbound, RunningTime):
+        self.RouteId = RouteId
+        self.RouteVarId = RouteVarId
         self.RouteVarName = RouteVarName
         self.RouteVarShortName = RouteVarShortName
         self.RouteNo = RouteNo
@@ -11,17 +11,17 @@ class RouteVar:
         self.Outbound = Outbound
         self.RunningTime = RunningTime
        
-    def getRouteID(self):
-        return self.RouteID
+    def getRouteId(self):
+        return self.RouteId
     
-    def setRouteID(self, x):
-        self.RouteID = x
+    def setRouteId(self, x):
+        self.RouteId = x
         
-    def getRouteVarID(self):
-        return self.RouteVarID
+    def getRouteVarId(self):
+        return self.RouteVarId
     
-    def setRouteVarID(self, x):
-        self.RouteVarID = x
+    def setRouteVarId(self, x):
+        self.RouteVarId = x
         
     def getRouteVarName(self):
         return self.RouteVarName
