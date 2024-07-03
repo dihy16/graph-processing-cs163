@@ -1,5 +1,5 @@
 class Stop:
-    def __init__(self, StopId, Code, Name, StopType, Zone, Ward, AddressNo, Street, SupportDisability, Status, Lng, Lat, Search, Routes):
+    def __init__(self, StopId, Code, Name, StopType, Zone, Ward, AddressNo, Street, SupportDisability, Status, Lng, Lat, Search, Routes, RouteId, RouteVarId):
         self.StopId = StopId
         self.Code = Code
         self.Name = Name
@@ -14,7 +14,9 @@ class Stop:
         self.Lat = Lat
         self.Search = Search
         self.Routes = Routes
-
+        self.RouteId = RouteId
+        self.RouteVarId = RouteVarId
+        
     def getStopId(self):
         return self.StopId
 
@@ -98,3 +100,15 @@ class Stop:
 
     def setRoutes(self, Routes):
         self.Routes = Routes
+
+    def getRouteId(self):
+        return self.RouteId
+
+    def setRouteId(self, routeId):
+        self.RouteId = routeId
+
+    def getRouteVarId(self):
+        return self.RouteVarId
+
+    def setRouteId(self, routeVarId):
+        self.RouteVarId = routeVarId

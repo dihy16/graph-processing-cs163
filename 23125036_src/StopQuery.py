@@ -6,11 +6,9 @@ from Stop import Stop
 class StopQuery:
     def __init__(self, stop_list):
         self.stop_list = stop_list
-        self.RouteId = None
-        self.RouteVarId = None
         
     def searchByStopId(self, stopId):
-        lst = [stop for stop in self.stop_list if stop.getStopID() == stopId]
+        lst = [stop for stop in self.stop_list if stop.getStopId() == stopId]
         return lst
     
     def searchByCode(self, code):
@@ -61,8 +59,16 @@ class StopQuery:
         lst = [stop for stop in self.stop_list if stop.getSearch() == search]
         return lst
     
-    def searchByRoutes(self, routes):
-        lst = [stop for stop in self.stop_list if stop.getRoutes() == routes]
+    def searchByRoutes(self, route):
+        lst = [stop for stop in self.stop_list if route in stop.getRoutes()]
+        return lst
+    
+    def searchByRouteId(self, routeId):
+        lst = [stop for stop in self.stop_list if stop.getRouteId() == routeId]
+        return lst
+    
+    def searchByRouteVarId(self, routeVarId):
+        lst = [stop for stop in self.stop_list if stop.getRouteVarId() == routeVarId]
         return lst
 
     def outputAsCSV(self, query_list, filename):
@@ -80,7 +86,9 @@ class StopQuery:
                           'Lng', 
                           'Lat', 
                           'Search', 
-                          'Routes'
+                          'Routes',
+                          'RouteId',
+                          'RouteVarId'
                           ]
             csv_writer = csv.DictWriter(fileout, fieldnames=fieldnames)
             csv_writer.writeheader()
@@ -90,15 +98,15 @@ class StopQuery:
     def outputAsJSON(self, query_list, filename):
         with open(filename, 'w', encoding='utf8') as fileout:
             for query in query_list:
-                json.dump(query.__dict__, fileout, ensure_ascii=False)
+                queryDict = query.__dict__
+                queryDict['Routes'] =','.join(query.getRoutes())
+                json.dump(queryDict, fileout, ensure_ascii=False)
                 fileout.write('\n')
+                
     def inputFromJSON(self, filename):
         with open(filename, 'r', encoding='utf8') as filein:
             for line in filein:
-                line = line.strip()
                 query = json.loads(line)
-                self.RouteId = query['RouteId']
-                self.RouteVarId = query['RouteVarId']
                 for stop in query['Stops']:
                     self.stop_list.append(Stop(stop['StopId'], 
                                               stop['Code'], 
@@ -113,6 +121,8 @@ class StopQuery:
                                               stop['Lng'], 
                                               stop['Lat'], 
                                               stop['Search'], 
-                                              stop['Routes']
+                                              stop['Routes'].split(','),
+                                              query['RouteId'], 
+                                              query['RouteVarId']
                                               )
                                         )
