@@ -6,6 +6,8 @@ from Stop import Stop
 class StopQuery:
     def __init__(self, stop_list):
         self.stop_list = stop_list
+        self.RouteId = None
+        self.RouteVarId = None
         
     def searchByStopId(self, stopId):
         lst = [stop for stop in self.stop_list if stop.getStopID() == stopId]
@@ -90,25 +92,27 @@ class StopQuery:
             for query in query_list:
                 json.dump(query.__dict__, fileout, ensure_ascii=False)
                 fileout.write('\n')
-                
     def inputFromJSON(self, filename):
         with open(filename, 'r', encoding='utf8') as filein:
             for line in filein:
                 line = line.strip()
                 query = json.loads(line)
-                self.stop_list.append(Stop(query['StopId'], 
-                                          query['Code'], 
-                                          query['Name'], 
-                                          query['StopType'], 
-                                          query['Zone'], 
-                                          query['Ward'], 
-                                          query['AddressNo'], 
-                                          query['Street'], 
-                                          query['SupportDisability'], 
-                                          query['Status'], 
-                                          query['Lng'], 
-                                          query['Lat'], 
-                                          query['Search'], 
-                                          query['Routes']
-                                          )
-                                    )
+                self.RouteId = query['RouteId']
+                self.RouteVarId = query['RouteVarId']
+                for stop in query['Stops']:
+                    self.stop_list.append(Stop(stop['StopId'], 
+                                              stop['Code'], 
+                                              stop['Name'], 
+                                              stop['StopType'], 
+                                              stop['Zone'], 
+                                              stop['Ward'], 
+                                              stop['AddressNo'], 
+                                              stop['Street'], 
+                                              stop['SupportDisability'], 
+                                              stop['Status'], 
+                                              stop['Lng'], 
+                                              stop['Lat'], 
+                                              stop['Search'], 
+                                              stop['Routes']
+                                              )
+                                        )
