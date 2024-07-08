@@ -1,6 +1,5 @@
 import csv
 import json
-from site import enablerlcompleter
 
 from Path import Path
 
@@ -8,12 +7,22 @@ class PathQuery:
     def __init__(self, path_list):
         self.path_list = path_list
         
-    def searchByLat(self, lat):
-        lst = [path for path in self.path_list if path.getLat() == lat]
+    def searchByLat(self, lat_parameter):
+        lst = []
+        for path in self.path_list:
+            lat_list = path.getLatList()
+            for lat in lat_list:
+                if lat == lat_parameter:
+                    lst.append(path)
         return lst
     
-    def searchByLng(self, lng):
-        lst = [path for path in self.path_list if path.getLng() == lng]
+    def searchByLng(self, lng_parameter):
+        lst = []
+        for path in self.path_list:
+            lng_list = path.getLngList()
+            for lng in lng_list:
+                if lng == lng_parameter:
+                    lst.append(path)
         return lst
     
     def searchByRouteId(self, routeId):
@@ -26,7 +35,7 @@ class PathQuery:
 
     def outputAsCSV(self, query_list, filename):
         with open(filename, 'w', encoding='utf8', newline='') as fileout:
-            fieldnames = ['Lat', 'Lng', 'RouteId', 'RouteVarId']
+            fieldnames = ['lat', 'lng', 'RouteId', 'RouteVarId']
             csv_writer = csv.DictWriter(fileout, fieldnames=fieldnames)
             csv_writer.writeheader()
             for query in query_list:
@@ -41,8 +50,6 @@ class PathQuery:
     def inputFromJSON(self, filename):
         with open(filename, 'r', encoding='utf8') as filein:
             for line in filein:
-                line = line.strip()
                 query = json.loads(line)
-                for obj in query:
-                    self.path_list.append(Path(obj['Lat'], obj['Lng'], obj['RouteId'], obj['RouteVarId']))
+                self.path_list.append(Path(query['lat'], query['lng'], query['RouteId'], query['RouteVarId']))
             

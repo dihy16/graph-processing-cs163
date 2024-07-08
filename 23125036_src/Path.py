@@ -5,16 +5,16 @@ class Path:
         self.RouteId = RouteId
         self.RouteVarId = RouteVarId
 
-    def getLat(self):
+    def getLatList(self):
         return self.Lat
 
-    def setLat(self, Lat):
+    def setLatList(self, Lat):
         self.Lat = Lat
 
-    def getLng(self):
+    def getLngList(self):
         return self.Lng
 
-    def setLng(self, Lng):
+    def setLngList(self, Lng):
         self.Lng = Lng
 
     def getRouteId(self):
