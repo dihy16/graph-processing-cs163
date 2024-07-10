@@ -1,7 +1,15 @@
-﻿from RouteVarQuery import RouteVarQuery
+﻿from Path import Path
+from RouteVarQuery import RouteVarQuery
+from StopQuery import StopQuery
+from PathQuery import PathQuery
+from Graph import Graph
 
 route_var_query = RouteVarQuery([])
 route_var_query.inputFromJSON('data/vars.json')
-route_var_query.outputAsJSON(route_var_query.searchByRouteId(35), 'data/route_var_output.json')
-route_var_query.outputAsCSV(route_var_query.searchByStartStop('Bến xe buýt Kho Muối'), 'data/route_var_output.csv')
+stop_query = StopQuery([])
+stop_query.inputFromJSON('data/stops.json')
+path_query = PathQuery([])
+path_query.inputFromJSON('data/paths.json')
+graph = Graph()
+graph.buildGraph(route_var_query, stop_query, path_query)
 

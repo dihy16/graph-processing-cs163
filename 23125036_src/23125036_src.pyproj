@@ -22,8 +22,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Graph.py" />
+    <Compile Include="LLtoXY.py" />
     <Compile Include="Path.py" />
     <Compile Include="PathQuery.py" />
+    <Compile Include="Rtree.py" />
     <Compile Include="StopQuery.py" />
     <Compile Include="Stop.py" />
     <Compile Include="RouteVarQuery.py" />
