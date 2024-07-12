@@ -1,5 +1,4 @@
-﻿from Path import Path
-from RouteVarQuery import RouteVarQuery
+﻿from RouteVarQuery import RouteVarQuery
 from StopQuery import StopQuery
 from PathQuery import PathQuery
 from Graph import Graph
@@ -12,4 +11,6 @@ path_query = PathQuery([])
 path_query.inputFromJSON('data/paths.json')
 graph = Graph()
 graph.buildGraph(route_var_query, stop_query, path_query)
+graph.shortestPathAllPairs(stop_query.stop_list, 'data/allPairs.json')
+
 
