@@ -7,12 +7,13 @@ import heapq
 import json
 
 class Graph:
-    
+    INF = float('inf')
     def __init__(self):
         self.AdjList = defaultdict(list)
         self.NumNodes = 0
         self.Edges = []
-    
+        self.Count = [0] * self.NumNodes
+
     def buildUniqueIdStops(self, stop_list):
         return list({stop.getStopId() for stop in stop_list})
 
@@ -65,30 +66,23 @@ class Graph:
         # adj list has form : {node0: edges, node1: edges,...}
         for i in range(len(self.Edges)):
             self.AdjList[self.Edges[i][0]].append(i)
-            
+  
     def Dijkstra(self, startNode):
-        
-        # distance array
         distances = [float('inf')] * self.NumNodes
         distances[startNode] = 0
-        
-        # priority queue
         pq = []
-        
         heapq.heappush(pq, (0, startNode))
         predecessors = [None] * self.NumNodes
         visited = [False] * self.NumNodes
 
         while pq:
             u_dist, u = heapq.heappop(pq)
-            
             for edge in self.AdjList[u]:
                 if distances[self.Edges[edge][1]] > distances[u] + self.Edges[edge][2]:
                     distances[self.Edges[edge][1]] = distances[u] + self.Edges[edge][2]
                     heapq.heappush(pq, (distances[self.Edges[edge][1]], self.Edges[edge][1]))
-            
         return distances
-       
+    
     def shortestPathAllPairs(self, stop_list, filename):
         with open(filename, 'w', encoding='utf8') as fout:
             uniqueStopIds = self.buildUniqueIdStops(stop_list)
@@ -104,3 +98,6 @@ class Graph:
         stop_indices_dict = self.buildStopIdDict(stop_list)
         shortestDist = self.Dijkstra(stop_indices_dict[start_stop_id])
         print(f"{start_stop_id},{end_stop_id} : {shortestDist[end_stop_id]}")
+        
+    def topStops(self):
+        pass
