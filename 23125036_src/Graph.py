@@ -7,7 +7,6 @@ import heapq
 import json
 
 class Graph:
-    INF = float('inf')
     def __init__(self):
         self.AdjList = defaultdict(list)
         self.NumNodes = 0
@@ -47,13 +46,20 @@ class Graph:
             path_in_route = PathQuery(path_query.searchByRouteId(str(route_var.getRouteId()))).searchByRouteVarId(str(route_var.getRouteVarId()))[0]
             
             stops_coordinates = [(stop.getLat(), stop.getLng()) for stop in stops_in_route]
-            rtree = Rtree.build_rtree_index(path_in_route.getLatList(), path_in_route.getLngList())
-            closest_points, distances = Rtree.find_closest_points_with_narrowing(path_in_route, stops_coordinates[1:], rtree)
+            rtree = Rtree.build_rtree(path_in_route.getLatList(), path_in_route.getLngList())
+            closest_points, distances = Rtree.calc_distances(path_in_route, stops_coordinates[1:], rtree)
             for i in range(len(stops_in_route[1:])):
-                startEdge = stop_indices_dict[stops_in_route[i - 1].getStopId()] # the edge will start from this stop
-                endEdge = stop_indices_dict[stops_in_route[i].getStopId()]
+                startNode = stop_indices_dict[stops_in_route[i - 1].getStopId()] # the edge will start from this stop
+                endNode = stop_indices_dict[stops_in_route[i].getStopId()]
                 dist = distances[i]
-                self.Edges.append((startEdge, endEdge, dist / speed, dist, closest_points[i]))
+                time_travelled = dist / speed
+                self.Edges.append({
+                    "startNode": startNode,
+                    "endNode": endNode,
+                    "time_travelled": time_travelled,
+                    "dist": dist,
+                    "closest_points": closest_points[i]
+                })
                 numEdge += 1
                 print(numEdge, dist)
                 
@@ -63,25 +69,36 @@ class Graph:
     def buildGraph(self, route_var_query, stop_query, path_query):
         self.buildEdges(route_var_query, stop_query, path_query)
         
-        # adj list has form : {node0: edges, node1: edges,...}
-        for i in range(len(self.Edges)):
-            self.AdjList[self.Edges[i][0]].append(i)
+        # adjacency list has form : {node_0: edges idx from node_0, node_1: edges idx from node_1,...}
+        for edge_idx in range(len(self.Edges)):
+            self.AdjList[self.Edges[edge_idx]['startNode']].append(edge_idx)
   
     def Dijkstra(self, startNode):
-        distances = [float('inf')] * self.NumNodes
-        distances[startNode] = 0
+        timeTaken = [float('inf')] * self.NumNodes
+        timeTaken[startNode] = 0
         pq = []
         heapq.heappush(pq, (0, startNode))
-        predecessors = [None] * self.NumNodes
         visited = [False] * self.NumNodes
-
         while pq:
-            u_dist, u = heapq.heappop(pq)
-            for edge in self.AdjList[u]:
-                if distances[self.Edges[edge][1]] > distances[u] + self.Edges[edge][2]:
-                    distances[self.Edges[edge][1]] = distances[u] + self.Edges[edge][2]
-                    heapq.heappush(pq, (distances[self.Edges[edge][1]], self.Edges[edge][1]))
-        return distances
+            curNode_time, curNode = heapq.heappop(pq)
+            
+            if visited[curNode] is True or curNode_time > timeTaken[curNode]:
+                continue
+            
+            visited[curNode] = True
+            
+            for edge_idx in self.AdjList[curNode]:
+                
+                edge = self.Edges[edge_idx]
+                if visited[edge['endNode']] is True:
+                    continue
+                if edge['endNode'] not in timeTaken:
+                    timeTaken[edge['endNode']] = float('inf')
+                newTime = curNode_time + edge['time_travelled']
+                if newTime < timeTaken[edge['endNode']]:
+                    timeTaken[edge['endNode']] = newTime
+                    heapq.heappush(pq, (newTime, edge['endNode']))
+        return timeTaken
     
     def shortestPathAllPairs(self, stop_list, filename):
         with open(filename, 'w', encoding='utf8') as fout:
