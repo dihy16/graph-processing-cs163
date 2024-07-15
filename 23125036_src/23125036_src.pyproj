@@ -23,6 +23,7 @@
   <ItemGroup>
     <Compile Include="Graph.py" />
     <Compile Include="LLtoXY.py" />
+    <Compile Include="OutputData.py" />
     <Compile Include="Path.py" />
     <Compile Include="PathQuery.py" />
     <Compile Include="Rtree.py" />

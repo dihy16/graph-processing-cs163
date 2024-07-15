@@ -7,6 +7,9 @@ class StopQuery:
     def __init__(self, stop_list):
         self.stop_list = stop_list
         
+    def getStopList(self):
+        return self.stop_list
+    
     def searchByStopId(self, stopId):
         lst = [stop for stop in self.stop_list if stop.getStopId() == stopId]
         return lst
@@ -126,3 +129,14 @@ class StopQuery:
                                               query['RouteVarId']
                                               )
                                         )
+
+    def buildUniqueIdStops(self, stop_list):
+        unique = set(stop.getStopId() for stop in stop_list)
+        return list(unique)
+    
+    def buildStopIdDict(self, stop_list):
+        stop_indices_dict = {}
+        uniqueRouteId_stops = self.buildUniqueIdStops(stop_list)
+        for i in range(len(uniqueRouteId_stops)):
+            stop_indices_dict[uniqueRouteId_stops[i]] = i
+        return stop_indices_dict
