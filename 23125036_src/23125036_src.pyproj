@@ -21,6 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ContractionHierarchies.py" />
     <Compile Include="Graph.py" />
     <Compile Include="LLtoXY.py" />
     <Compile Include="OutputData.py" />

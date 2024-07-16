@@ -6,10 +6,14 @@ import heapq
 import json
 import LLtoXY
 import math
+import queue
 
 class Graph:
+    INF = float('inf')
+
     def __init__(self, NumNodes):
         self.AdjList = defaultdict(list)
+        self.TransAdjList = defaultdict(list)
         self.NumNodes = NumNodes
         self.Edges = []
 
@@ -44,7 +48,7 @@ class Graph:
                 curStop = stops_in_route_var[i]
                 endNode = stop_indices_dict[curStop.getStopId()]
                 y_stop, x_stop = LLtoXY.convertLngLatToXY(curStop.getLng(), curStop.getLat())    
-                min_dist = float('inf')
+                min_dist = self.INF
                 for j1 in range(minDistIdx, len(pathLngList)):
                     y1, x1 = LLtoXY.convertLngLatToXY(path_in_rv.getLngList()[j1], path_in_rv.getLatList()[j1])
                     curDist = math.sqrt((x1 - x_stop) ** 2 + (y1 - y_stop) ** 2)
@@ -101,7 +105,20 @@ class Graph:
         # adjacency list has form : {node_0: edges idx from node_0, node_1: edges idx from node_1,...}
         for edge_idx in range(len(self.Edges)):
             self.AdjList[self.Edges[edge_idx]['startNode']].append(edge_idx)
-     
+            self.TransAdjList[self.Edges[edge_idx]['endNode']].append(edge_idx)
+            
+    def relax_edges_from_node(self, curNode, pq, timeTaken, node_time, isTrans):
+        for edge_idx in self.TransAdjList[curNode] if isTrans else self.AdjList[curNode]:
+            edge = self.Edges[edge_idx]
+                
+            if edge['endNode'] not in timeTaken:
+                timeTaken[edge['endNode']] = self.INF
+                    
+            newTime = node_time + edge['time_travelled']
+            if newTime < timeTaken[edge['endNode']]:
+                timeTaken[edge['endNode']] = newTime
+                heapq.heappush(pq, (newTime, edge['endNode']))   
+                
     def Dijkstra_with_trace(self, startNode):
         timeTaken = {}
         timeTaken[startNode] = 0
@@ -123,7 +140,7 @@ class Graph:
                 
                 edge = self.Edges[edge_idx]
                 if edge['endNode'] not in timeTaken:
-                    timeTaken[edge['endNode']] = float('inf')
+                    timeTaken[edge['endNode']] = self.INF
                 newTime = curNode_time + edge['time_travelled']
                 if newTime < timeTaken[edge['endNode']]:
                     timeTaken[edge['endNode']] = newTime
@@ -134,7 +151,7 @@ class Graph:
     def form_path(self, startNode, timeTaken, predecessors):
         paths = {}
         for idx in range(self.NumNodes):
-            if idx in timeTaken and timeTaken[idx] != float('inf'):
+            if idx in timeTaken and timeTaken[idx] != self.INF:
                 tmp = idx
                 path = []
                 while tmp != startNode:
@@ -144,6 +161,25 @@ class Graph:
                 paths[idx] = reversed(path)
         return paths
     
+    def Dijkstra_1_Pair(self, startNode, goalNode):
+        timeTaken = {}
+        timeTaken[startNode] = 0
+        pq = []
+        heapq.heappush(pq, (0, startNode))
+        visited = [False] * self.NumNodes
+        
+        while pq:
+            curNodeTime, curNode = heapq.heappop(pq)
+            
+            if visited[goalNode]:
+                break
+            if visited[curNode]:
+                continue
+            visited[curNode] = True
+            self.relax_edges_from_node(curNode, pq, timeTaken, curNodeTime, False)
+            
+        return timeTaken[goalNode]
+
     def Dijkstra(self, startNode):
         timeTaken = {}
         timeTaken[startNode] = 0
@@ -156,21 +192,12 @@ class Graph:
             
             if visited[curNode]:
                 continue
-            
             visited[curNode] = True
+            self.relax_edges_from_node(curNode, pq, timeTaken, curNodeTime, False)
             
-            for edge_idx in self.AdjList[curNode]:
-                
-                edge = self.Edges[edge_idx]
-                if edge['endNode'] not in timeTaken:
-                    timeTaken[edge['endNode']] = float('inf')
-                newTime = curNodeTime + edge['time_travelled']
-                if newTime < timeTaken[edge['endNode']]:
-                    timeTaken[edge['endNode']] = newTime
-                    heapq.heappush(pq, (newTime, edge['endNode']))
         return timeTaken
     
-    def DijkstraAllPairs(self, uniqueIds):
+    def DijkstraAllPairs(self):
         run_time = 0
         for node in range(self.NumNodes):
             startTime = time.time()
@@ -216,4 +243,46 @@ class Graph:
             stop = stops[0]
             top_stops_list.append(stop)
         return top_stops_list
-    
+
+    def Bidirectional_Dijkstra(self, startNode, goalNode):
+        timeF = {}
+        timeF[startNode] = 0
+        timeB = {}
+        timeB[goalNode] = 0
+
+        pq = []
+        heapq.heappush(pq, (0, startNode))
+        pq_rev = []
+        heapq.heappush(pq_rev, (0, goalNode))
+
+        
+        visitedF = [False] * self.NumNodes
+        visitedB = [False] * self.NumNodes
+        
+        best_dist = self.INF
+
+        while pq or pq_rev:
+
+            if pq:
+                u_time, u = heapq.heappop(pq)
+
+                if timeF[u] <= best_dist:
+                    self.relax_edges_from_node(u, pq, timeF, u_time, False)
+
+                visitedF[u] = True
+
+                if visitedB[u] and timeF[u] + timeB[u] < best_dist:
+                    best_dist = timeF[u] + timeB[u]
+
+            if pq_rev:
+                u_time, u = heapq.heappop(pq_rev)
+
+                if timeB[u] <= best_dist:
+                    self.relax_edges_from_node(u, pq_rev, timeB, u_time, True)
+
+                visitedB[u] = True
+
+                if visitedF[u] and timeF[u] + timeB[u] < best_dist:
+                    best_dist = timeF[u] + timeB[u]
+
+        return -1 if best_dist == self.INF else best_dist
