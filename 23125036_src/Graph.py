@@ -143,7 +143,7 @@ class Graph:
                 path.append(startNode)
                 paths[idx] = reversed(path)
         return paths
-            
+    
     def Dijkstra(self, startNode):
         timeTaken = {}
         timeTaken[startNode] = 0
@@ -152,7 +152,7 @@ class Graph:
         visited = [False] * self.NumNodes
         
         while pq:
-            curNode_time, curNode = heapq.heappop(pq)
+            curNodeTime, curNode = heapq.heappop(pq)
             
             if visited[curNode]:
                 continue
@@ -164,31 +164,20 @@ class Graph:
                 edge = self.Edges[edge_idx]
                 if edge['endNode'] not in timeTaken:
                     timeTaken[edge['endNode']] = float('inf')
-                newTime = curNode_time + edge['time_travelled']
+                newTime = curNodeTime + edge['time_travelled']
                 if newTime < timeTaken[edge['endNode']]:
                     timeTaken[edge['endNode']] = newTime
                     heapq.heappush(pq, (newTime, edge['endNode']))
         return timeTaken
     
     def DijkstraAllPairs(self, uniqueIds):
-        tot = 0
-        maxTime = 0
-        minTime = 100
-        maxNode = 0
-        minNode = 0
-        for u in range(self.NumNodes):
-            start = time.time()
-            self.Dijkstra(u)
-            timeForANode = time.time() - start
-            if maxTime < timeForANode:
-                maxTime = timeForANode
-                maxNode = uniqueIds[u]
-            if minTime > timeForANode:
-                minTime = timeForANode
-                minNode = uniqueIds[u]
-            tot += timeForANode
-            print('dijkstra progress: {}/4396 edges'.format(u))
-        print('Dijkstra: maxTime: {}, maxNode: {}, minTime: {}, minNode: {}, sumTime: {}, avgTime: {}'.format(maxTime, maxNode, minTime, minNode, tot, tot/self.NumNodes))
+        run_time = 0
+        for node in range(self.NumNodes):
+            startTime = time.time()
+            self.Dijkstra(node)
+            run_time += time.time() - startTime
+            print('dijkstra progress: {}/4396 edges'.format(node))
+        print('Total run time: {}'.format(run_time))
     
     def ExportShortestPathAllPairs(self, uniqueIds, filename):
         with open(filename, 'w', encoding='utf8') as fout:
