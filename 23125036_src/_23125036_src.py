@@ -2,8 +2,18 @@
 from StopQuery import StopQuery
 from PathQuery import PathQuery
 from Graph import Graph
+from ContractionHierarchies import ContractionHierarchies
 
 import time
+import random
+
+def generate_multiple_pairs(start, stop, num_pairs):
+    pairs = []
+    for _ in range(num_pairs):
+        pairs.append(tuple(random.sample(range(start, stop), 2)))
+    return pairs
+
+PRECISION_TOLERANCE = 1e-9
 
 route_var_query = RouteVarQuery([])
 route_var_query.inputFromJSON('data/vars.json')
@@ -20,57 +30,85 @@ NumNodes = len(stop_indices_dict)
 
 graph = Graph(NumNodes)
 
-# build edges from scratch
-#graph.buildGraph(route_var_query, stop_query, path_query, stop_indices_dict)
+"""
+Build edges from scratch
+# """
+# start = time.time()
+# graph.buildGraph(route_var_query, stop_query, path_query, stop_indices_dict)
+# print(time.time() - start)
 
-# input edges from file
-graph.inputGraphFromJSON('data/Edges.json')
+# """
+# Save edges to file
+# """
+# graph.outputEdgesAsJSON('data/GraphEdges.json')
 
-# run dijkstra for all pairs, then export to file
-#graph.DijkstraAllPairs()
-#graph.ExportShortestPathAllPairs(uniqueIds, 'data/allPairs.json')
+"""
+Input edges from file
+"""
+graph.inputEdgesFromJSON('data/GraphEdges.json')
 
-#save edges to file
-#OutputData.outputListDictsAsJSON('data/GraphEdges.json', graph.Edges)
+"""
+Run dijkstra for all pairs, then export to file
+"""
+# print('Running Dijkstra on all pairs...')
+# start = time.time()
+# graph.DijkstraAllPairs()
+# print(time.time() - start)
+# graph.ExportShortestPathAllPairs(uniqueIds, 'data/allPairs.json')
 
-# finding top k stops, then export to file
-#kTopStops = graph.findKtopStops(uniqueIds, stop_list, 30)
-#stop_query.outputAsJSON(kTopStops, 'data/kStops.json')
+"""
+Finding top k stops, then export to file
+"""
+# print('Finding top stops...')
+# kTopStops = graph.findKtopStops(uniqueIds, stop_list, 30)
+# stop_query.outputAsJSON(kTopStops, 'data/kStops.json')
 
-# comparing results between Dijkstra's and Bidirectional Dijkstra's
-# for source in range(2, 3):
-#     true = graph.Dijkstra(source)
-#     for target in range(graph.NumNodes):
-#         if source == target or target not in true:
-#             continue
-#         print(uniqueIds[source], uniqueIds[target])
-#         shortest_path = graph.Bidirectional_Dijkstra(source, target)
-#         if shortest_path != true[target]:
-#             print('{} , {} : true: {} - vjp{}'.format(uniqueIds[source], uniqueIds[target], true[target], shortest_path))
-            
-# comparing run time between normal Dijkstra and Bidirectional Dijkstra
+
+"""
+Comparing run time between Dijkstra and Bidirectional Dijkstra on CH 
+"""
+start = 0
+stop = graph.NumNodes - 1
+num_pairs = 10000
+pairs = generate_multiple_pairs(start, stop, num_pairs)
+
 dijk_time = 0
-bidijk_time = 0
-
 dijk_dist = []
+
+print('Querying with Dijkstra...')
+start = time.time() 
+for pair in pairs:
+    source, target = pair
+    ans = graph.Dijkstra_1_Pair(source, target)
+    dijk_dist.append((source, target, ans))
+dijk_time = time.time() - start
+print(dijk_time)
+
+CH = ContractionHierarchies(graph)
+start = time.time()
+print('Computing CH...')
+CH.preprocess_graph()
+CHtime = time.time() - start
 bidijk_dist = []
 
 start = time.time() 
-for source in range(0, 10):
-     for target in range(0, 1000):
-        print('dijk {} {}'.format(source, target))
-        dijk_dist.append(graph.Dijkstra_1_Pair(source, target))
-dijk_time = time.time() - start
 
-start = time.time() 
-for source in range(0, 10):
-     for target in range(0, 1000):        
-        print('BIdijk {} {}'.format(source, target))
-        bidijk_dist.append(graph.Bidirectional_Dijkstra(source, target))
-bidijk_time = time.time() - start
+print('Querying with CH...')
+for pair in pairs:
+    source, target = pair 
+    bidijk_dist.append(graph.Bidirectional_Dijkstra(source, target))
+bidijkTime = time.time() - start
 
-print(dijk_time, bidijk_time)
-        
-for i in range(0, 1000):
-    if dijk_dist[i] != bidijk_dist[i]:
-        print(dijk_dist[i], bidijk_dist[i])
+print(bidijkTime, 'secs')
+print('RESULT:')
+print('Vertex count: ', graph.NumNodes)
+print('Edge count: ', graph.NumEdges)
+print('Dijkstra time: ', dijk_time)
+print('CH compute time: ', CHtime)
+print('CH query time: ', bidijkTime)
+cnt = 0
+for i in range(0, len(dijk_dist)):
+    if abs(dijk_dist[i][2] - bidijk_dist[i]) > PRECISION_TOLERANCE:
+        cnt += 1
+        print(dijk_dist[i][0], dijk_dist[i][1], dijk_dist[i][2], bidijk_dist[i])
+print('{} / {}'.format(cnt, len(dijk_dist)))

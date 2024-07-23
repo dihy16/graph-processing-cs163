@@ -26,7 +26,7 @@ def find_closest_points_with_narrowing(path, given_points, rtree_idx):
             x2, y2 = LLtoXY.convertLngLatToXY(path.getLngList()[idx], path.getLatList()[idx])
             dist += math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         distances.append(dist)
-        current_index = max(current_index, nearest_index)
+        current_index = nearest_index + 1
         # narrow down the search space for the next point
         # rtree_idx = build_rtree_index(path.getLatList()[current_index:], path.getLngList()[current_index:])
         
