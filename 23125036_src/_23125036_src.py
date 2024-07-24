@@ -12,6 +12,8 @@ def generate_multiple_pairs(start, stop, num_pairs):
     for _ in range(num_pairs):
         pairs.append(tuple(random.sample(range(start, stop), 2)))
     return pairs
+def compareDijkstraAndCH():
+    pass
 
 PRECISION_TOLERANCE = 1e-9
 
@@ -26,41 +28,41 @@ stop_list = stop_query.getStopList()
 uniqueIds = stop_query.buildUniqueIdStops(stop_list)
 stop_indices_dict = stop_query.buildStopIdDict(stop_list)
 
-NumNodes = len(stop_indices_dict)
+num_nodes = len(stop_indices_dict)
 
-graph = Graph(NumNodes)
+graph = Graph(num_nodes)
 
 """
 Build edges from scratch
-# """
+"""
 # start = time.time()
-# graph.buildGraph(route_var_query, stop_query, path_query, stop_indices_dict)
+# graph.build_graph(route_var_query, stop_query, path_query, stop_indices_dict)
 # print(time.time() - start)
 
 # """
 # Save edges to file
 # """
-# graph.outputEdgesAsJSON('data/GraphEdges.json')
+# graph.output_edges_as_JSON('data/GraphEdges.json')
 
 """
 Input edges from file
 """
-graph.inputEdgesFromJSON('data/GraphEdges.json')
-
+graph.input_edges_from_JSON('data/GraphEdges.json')
+#graph.export_path_2_stops(0, 1)
 """
 Run dijkstra for all pairs, then export to file
 """
 # print('Running Dijkstra on all pairs...')
 # start = time.time()
-# graph.DijkstraAllPairs()
+# graph.dijkstra_all_pairs()
 # print(time.time() - start)
-# graph.ExportShortestPathAllPairs(uniqueIds, 'data/allPairs.json')
+# graph.export_dijkstra_all_pairs(uniqueIds, 'data/allPairs.json')
 
 """
 Finding top k stops, then export to file
 """
 # print('Finding top stops...')
-# kTopStops = graph.findKtopStops(uniqueIds, stop_list, 30)
+# kTopStops = graph.find_k_top_stops(uniqueIds, stop_list, 30)
 # stop_query.outputAsJSON(kTopStops, 'data/kStops.json')
 
 
@@ -68,7 +70,7 @@ Finding top k stops, then export to file
 Comparing run time between Dijkstra and Bidirectional Dijkstra on CH 
 """
 start = 0
-stop = graph.NumNodes - 1
+stop = graph.num_nodes - 1
 num_pairs = 10000
 pairs = generate_multiple_pairs(start, stop, num_pairs)
 
@@ -79,7 +81,7 @@ print('Querying with Dijkstra...')
 start = time.time() 
 for pair in pairs:
     source, target = pair
-    ans = graph.Dijkstra_1_Pair(source, target)
+    ans = graph.dijkstra_one_pair(source, target)
     dijk_dist.append((source, target, ans))
 dijk_time = time.time() - start
 print(dijk_time)
@@ -96,13 +98,13 @@ start = time.time()
 print('Querying with CH...')
 for pair in pairs:
     source, target = pair 
-    bidijk_dist.append(graph.Bidirectional_Dijkstra(source, target))
+    bidijk_dist.append(graph.bidirectional_dijkstra(source, target))
 bidijkTime = time.time() - start
 
 print(bidijkTime, 'secs')
 print('RESULT:')
-print('Vertex count: ', graph.NumNodes)
-print('Edge count: ', graph.NumEdges)
+print('Vertex count: ', graph.num_nodes)
+print('Edge count: ', graph.num_edges)
 print('Dijkstra time: ', dijk_time)
 print('CH compute time: ', CHtime)
 print('CH query time: ', bidijkTime)
