@@ -10,16 +10,16 @@ import copy
 class Graph:
     INF = float('inf')
 
-    def __init__(self, NumNodes):
-        self.AdjList = defaultdict(list)
-        self.TransAdjList = defaultdict(list)
-        self.NumNodes = NumNodes
-        self.NumEdges = 0
-        self.MaxOutgoing = [0] * NumNodes  # MaxOutgoing[u] is the weight of the heaviest outgoing edge from u
-        self.MinOutgoing = [self.INF] * NumNodes
-        self.MaxIncoming = [0] * NumNodes
+    def __init__(self, num_nodes):
+        self.adj_list = defaultdict(list)
+        self.trans_adj_list = defaultdict(list)
+        self.num_nodes = num_nodes
+        self.num_edges = 0
+        self.max_outgoing = [0] * num_nodes  # max_outgoing[u] is the weight of the heaviest outgoing edge from u
+        self.min_outgoing = [self.INF] * num_nodes
+        self.max_incoming = [0] * num_nodes
         
-    def findDistBetween2Stops(self, minDistIdx, pathLngList, pathLatList, curStop):
+    def find_dist_between_2_stops(self, minDistIdx, pathLngList, pathLatList, curStop):
         y_stop, x_stop = LLtoXY.convertLngLatToXY(curStop.getLng(), curStop.getLat())    
         min_dist = self.INF
         for j1 in range(minDistIdx, len(pathLngList)):
@@ -41,7 +41,7 @@ class Graph:
             
         return dist, ind, path_points
     
-    def buildGraph(self, route_var_query, stop_query, path_query, stop_indices_dict):
+    def build_graph(self, route_var_query, stop_query, path_query, stop_indices_dict):
         """Initialize list of edges for the graph from 3 lists: routeVars, stops, and paths"""
         numEdge = 0
         
@@ -67,7 +67,7 @@ class Graph:
                 curStop = stops_in_route_var[i]
                 endNode = stop_indices_dict[curStop.getStopId()]
                 
-                dist, minDistIdx, path_points = self.findDistBetween2Stops(minDistIdx, pathLngList, pathLatList, curStop)
+                dist, minDistIdx, path_points = self.find_dist_between_2_stops(minDistIdx, pathLngList, pathLatList, curStop)
                 
                 time_travelled = dist / speed
                 edge = (startNode, endNode, time_travelled, dist, path_points)
@@ -76,47 +76,47 @@ class Graph:
                 startNode = endNode
                 numEdge += 1
                 
-        self.NumEdges = numEdge
+        self.num_edges = numEdge
         
-    def inputEdgesFromJSON(self, filename):
-        numEdges = 0
+    def input_edges_from_JSON(self, filename):
+        num_edges = 0
         with open(filename, 'r', encoding='utf8') as filein:
             for line in filein:
                 edge = json.loads(line)
-                numEdges += 1
+                num_edges += 1
                 edge = (edge['startNode'], edge['endNode'], edge['time_travelled'], edge['dist'], edge['path_points'])
-                self.addEdge(edge)
-        self.NumEdges = numEdges
+                self.add_edge(edge)
+        self.num_edges = num_edges
                 
-    def outputEdgesAsJSON(self, filename):
+    def output_edges_from_JSON(self, filename):
         keys = ['startNode', 'endNode', 'time_travelled', 'dist', 'path_points']
         with open(filename, 'w', encoding='utf8') as fout:
-            for u in range(self.NumNodes):
-                edges = self.AdjList[u]
+            for u in range(self.num_nodes):
+                edges = self.adj_list[u]
                 for edge in edges:
                     edge_dict = {keys[i]: edge[i] for i in range(len(keys))}
                     json.dump(edge_dict, fout, ensure_ascii=False)
                     fout.write('\n')
     
-    def addEdge(self, edge):
-        self.AdjList[edge[0]].append(edge)
+    def add_edge(self, edge):
+        self.adj_list[edge[0]].append(edge)
             
-        transEdge = list(copy.deepcopy(edge))
-        transEdge[0], transEdge[1] = transEdge[1], transEdge[0]
-        self.TransAdjList[transEdge[0]].append(tuple(transEdge))
+        trans_edge = list(copy.deepcopy(edge))
+        trans_edge[0], trans_edge[1] = trans_edge[1], trans_edge[0]
+        self.trans_adj_list[trans_edge[0]].append(tuple(trans_edge))
             
         w = edge[2]
-        if self.MaxIncoming[edge[1]] < w:
-            self.MaxIncoming[edge[1]] = w
+        if self.max_incoming[edge[1]] < w:
+            self.max_incoming[edge[1]] = w
             
-        if self.MaxOutgoing[edge[0]] < w:
-            self.MaxOutgoing[edge[0]] = w
+        if self.max_outgoing[edge[0]] < w:
+            self.max_outgoing[edge[0]] = w
             
-        if self.MinOutgoing[edge[0]] > w:
-            self.MinOutgoing[edge[0]] = w
+        if self.min_outgoing[edge[0]] > w:
+            self.min_outgoing[edge[0]] = w
    
     def relax_edges_from_node(self, curNode, pq, timeTaken, node_time, isTrans):
-        for edge in self.TransAdjList[curNode] if isTrans else self.AdjList[curNode]:
+        for edge in self.trans_adj_list[curNode] if isTrans else self.adj_list[curNode]:
             if edge[1] not in timeTaken:
                 timeTaken[edge[1]] = self.INF
                 
@@ -124,32 +124,32 @@ class Graph:
                 timeTaken[edge[1]] = node_time + edge[2]
                 heapq.heappush(pq, (node_time + edge[2], edge[1]))  
                 
-    def Dijkstra_1_Pair(self, startNode, goalNode):
-        timeTaken = {x: self.INF for x in range(self.NumNodes)}
-        timeTaken[startNode] = 0
+    def dijkstra_one_pair(self, start_node, goal_node):
+        timeTaken = {x: self.INF for x in range(self.num_nodes)}
+        timeTaken[start_node] = 0
         pq = []
-        heapq.heappush(pq, (0, startNode))
-        visited = [False] * self.NumNodes
+        heapq.heappush(pq, (0, start_node))
+        visited = [False] * self.num_nodes
     
         while pq:
             curNodeTime, curNode = heapq.heappop(pq)
             
-            if curNode == goalNode:
+            if curNode == goal_node:
                 break
             if visited[curNode]:
                 continue
             visited[curNode] = True
             self.relax_edges_from_node(curNode, pq, timeTaken, curNodeTime, False)
-        if timeTaken[goalNode] != self.INF:
-            return timeTaken[goalNode]
+        if timeTaken[goal_node] != self.INF:
+            return timeTaken[goal_node]
         return -1
 
-    def Dijkstra_with_trace(self, startNode):
+    def dijkstra_with_trace(self, start_node):
         timeTaken = {}
-        timeTaken[startNode] = 0
+        timeTaken[start_node] = 0
         pq = []
-        heapq.heappush(pq, (0, startNode))
-        visited = [False] * self.NumNodes
+        heapq.heappush(pq, (0, start_node))
+        visited = [False] * self.num_nodes
         
         predecessors = {}
         
@@ -161,7 +161,7 @@ class Graph:
             
             visited[curNode] = True
             
-            for edge in self.AdjList[curNode]:
+            for edge in self.adj_list[curNode]:
                 
                 if edge[1] not in timeTaken:
                     timeTaken[edge[1]] = self.INF
@@ -174,7 +174,7 @@ class Graph:
     
     def form_path(self, startNode, timeTaken, predecessors):
         paths = {}
-        for idx in range(self.NumNodes):
+        for idx in range(self.num_nodes):
             if idx in timeTaken and timeTaken[idx] != self.INF:
                 tmp = idx
                 path = []
@@ -182,15 +182,15 @@ class Graph:
                     path.append(tmp)
                     tmp = predecessors[tmp]
                 path.append(startNode)
-                paths[idx] = reversed(path)
+                paths[idx] = path[::-1]
         return paths
    
-    def Dijkstra(self, startNode):
+    def dijkstra(self, start_node):
         timeTaken = {}
-        timeTaken[startNode] = 0
+        timeTaken[start_node] = 0
         pq = []
-        heapq.heappush(pq, (0, startNode))
-        visited = [False] * self.NumNodes
+        heapq.heappush(pq, (0, start_node))
+        visited = [False] * self.num_nodes
         
         while pq:
             curNodeTime, curNode = heapq.heappop(pq)
@@ -202,28 +202,58 @@ class Graph:
             
         return timeTaken
     
-    def DijkstraAllPairs(self):
-        for node in range(self.NumNodes):
-            self.Dijkstra(node)
+    def dijkstra_all_pairs(self):
+        for node in range(self.num_nodes):
+            self.dijkstra(node)
     
-    def ExportShortestPathAllPairs(self, uniqueIds, filename):
+    def export_dijkstra_all_pairs(self, uniqueIds, filename):
         with open(filename, 'w', encoding='utf8') as fout:
-            for u in range(self.NumNodes):
-                result = self.Dijkstra(u)
-                for v in range(self.NumNodes):
+            for u in range(self.num_nodes):
+                result = self.dijkstra(u)
+                for v in range(self.num_nodes):
                     if u != v and v in result:
                         json.dump((uniqueIds[u], uniqueIds[v], result[v]), fout, ensure_ascii=False)
                         fout.write('\n')
     
-    def shortestPath2Stops(self, start_stop_id, end_stop_id, stop_list):
-        stop_indices_dict = self.buildStopIdDict(stop_list)
-        shortestDist = self.Dijkstra(stop_indices_dict[start_stop_id])
-        print(f"{start_stop_id},{end_stop_id} : {shortestDist[end_stop_id]}")
+    def dijkstra_one_pair_with_trace(self, start_node, goal_node):
+        timeTaken = {x: self.INF for x in range(self.num_nodes)}
+        timeTaken[start_node] = 0
+        pq = []
+        heapq.heappush(pq, (0, start_node))
+        visited = [False] * self.num_nodes
         
-    def findKtopStops(self, uniqueIds, stop_list, k=10):
-        count = {x: 0 for x in range(self.NumNodes)}
-        for node in range(self.NumNodes):
-            time, trace = self.Dijkstra_with_trace(node)
+        predecessors = {}
+
+        while pq:
+            curNode_time, curNode = heapq.heappop(pq)
+            
+            if curNode == goal_node:
+                break
+            if visited[curNode]:
+                continue
+            for edge in self.adj_list[curNode]:
+                if edge[1] not in timeTaken:
+                    timeTaken[edge[1]] = self.INF
+                newTime = curNode_time + edge[2]
+                if newTime < timeTaken[edge[1]]:
+                    timeTaken[edge[1]] = newTime
+                    heapq.heappush(pq, (newTime, edge[1]))
+                    predecessors[edge[1]] = curNode
+                    
+        if timeTaken[goal_node] != self.INF:
+            return timeTaken[goal_node], predecessors
+        return -1, predecessors
+    
+    def export_path_2_stops(self, start_node, goal_node):
+        time_taken, prev_nodes = self.dijkstra_one_pair_with_trace(start_node, goal_node)
+        if time_taken != -1:
+            path = self.form_path(start_node, time_taken, prev_nodes)
+        print(path)
+        
+    def find_k_top_stops(self, uniqueIds, stop_list, k=10):
+        count = {x: 0 for x in range(self.num_nodes)}
+        for node in range(self.num_nodes):
+            time, trace = self.dijkstra_with_trace(node)
             paths = self.form_path(node, time, trace)
             for endNode in paths:
                 for node in paths[endNode]:
@@ -242,46 +272,56 @@ class Graph:
             top_stops_list.append(stop)
         return top_stops_list
  
-    def Bidirectional_Dijkstra(self, startNode, goalNode):
-        timeF = {}
-        timeF[startNode] = 0
-        timeB = {}
-        timeB[goalNode] = 0
+    def bidirectional_dijkstra(self, start_node, goal_node):
+        timeF = {x: self.INF for x in range(self.num_nodes)}
+        timeF[start_node] = 0
+        timeB = {x: self.INF for x in range(self.num_nodes)}
+        timeB[goal_node] = 0
 
         pq = []
-        heapq.heappush(pq, (0, startNode))
+        heapq.heappush(pq, (0, start_node))
         pq_rev = []
-        heapq.heappush(pq_rev, (0, goalNode))
+        heapq.heappush(pq_rev, (0, goal_node))
 
         
-        visitedF = [False] * self.NumNodes
-        visitedB = [False] * self.NumNodes
+        visitedF = [False] * self.num_nodes
+        visitedB = [False] * self.num_nodes
         
-        best_dist = self.INF
+        result = self.INF
 
         while pq or pq_rev:
 
             if pq:
                 u_time, u = heapq.heappop(pq)
-                
-                if timeF[u] <= best_dist:
+                need_process = True
+                for edge in self.trans_adj_list[u]:
+                    weight = edge[2]
+                    if timeF[edge[1]] + weight < timeF[u]:
+                        need_process = False
+                        break
+                if need_process and timeF[u] <= result:
                     self.relax_edges_from_node(u, pq, timeF, u_time, False)
                     
                 visitedF[u] = True
-                if visitedB[u] and timeF[u] + timeB[u] < best_dist:
-                    best_dist = timeF[u] + timeB[u]
+                if visitedB[u] and timeF[u] + timeB[u] < result:
+                    result = timeF[u] + timeB[u]
 
             if pq_rev:
                 u_time, u = heapq.heappop(pq_rev)
-                
-                if timeB[u] <= best_dist:
+                need_process = True
+                for edge in self.adj_list[u]:
+                    weight = edge[2]
+                    if timeB[edge[1]] + weight < timeB[u]:
+                        need_process = False
+                        break
+                if timeB[u] <= result:
                     self.relax_edges_from_node(u, pq_rev, timeB, u_time, True)
                     
                 visitedB[u] = True
-                if visitedF[u] and timeF[u] + timeB[u] < best_dist:
-                    best_dist = timeF[u] + timeB[u]
+                if visitedF[u] and timeF[u] + timeB[u] < result:
+                    result = timeF[u] + timeB[u]
 
-        if best_dist != self.INF:
-            return best_dist
+        if result != self.INF:
+            return result
         return -1
    
