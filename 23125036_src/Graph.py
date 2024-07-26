@@ -125,12 +125,11 @@ class Graph:
                 heapq.heappush(pq, (node_time + edge[2], edge[1]))  
                 
     def dijkstra_one_pair(self, start_node, goal_node):
-        timeTaken = {x: self.INF for x in range(self.num_nodes)}
+        timeTaken = {}
         timeTaken[start_node] = 0
         pq = []
         heapq.heappush(pq, (0, start_node))
         visited = [False] * self.num_nodes
-    
         while pq:
             curNodeTime, curNode = heapq.heappop(pq)
             
@@ -140,7 +139,7 @@ class Graph:
                 continue
             visited[curNode] = True
             self.relax_edges_from_node(curNode, pq, timeTaken, curNodeTime, False)
-        if timeTaken[goal_node] != self.INF:
+        if goal_node in timeTaken:
             return timeTaken[goal_node]
         return -1
 
@@ -232,8 +231,6 @@ class Graph:
             if visited[curNode]:
                 continue
             for edge in self.adj_list[curNode]:
-                if edge[1] not in timeTaken:
-                    timeTaken[edge[1]] = self.INF
                 newTime = curNode_time + edge[2]
                 if newTime < timeTaken[edge[1]]:
                     timeTaken[edge[1]] = newTime
@@ -246,8 +243,7 @@ class Graph:
     
     def export_path_2_stops(self, start_node, goal_node):
         time_taken, prev_nodes = self.dijkstra_one_pair_with_trace(start_node, goal_node)
-        if time_taken != -1:
-            path = self.form_path(start_node, time_taken, prev_nodes)
+        path = self.form_path(start_node, time_taken, prev_nodes)
         print(path)
         
     def find_k_top_stops(self, uniqueIds, stop_list, k=10):
@@ -272,56 +268,46 @@ class Graph:
             top_stops_list.append(stop)
         return top_stops_list
  
-    def bidirectional_dijkstra(self, start_node, goal_node):
-        timeF = {x: self.INF for x in range(self.num_nodes)}
-        timeF[start_node] = 0
-        timeB = {x: self.INF for x in range(self.num_nodes)}
-        timeB[goal_node] = 0
+    def bidirectional_dijkstra(self, startNode, goalNode):
+        timeF = {}
+        timeF[startNode] = 0
+        timeB = {}
+        timeB[goalNode] = 0
 
         pq = []
-        heapq.heappush(pq, (0, start_node))
+        heapq.heappush(pq, (0, startNode))
         pq_rev = []
-        heapq.heappush(pq_rev, (0, goal_node))
+        heapq.heappush(pq_rev, (0, goalNode))
 
         
         visitedF = [False] * self.num_nodes
         visitedB = [False] * self.num_nodes
         
-        result = self.INF
+        best_dist = self.INF
 
         while pq or pq_rev:
 
             if pq:
                 u_time, u = heapq.heappop(pq)
-                need_process = True
-                for edge in self.trans_adj_list[u]:
-                    weight = edge[2]
-                    if timeF[edge[1]] + weight < timeF[u]:
-                        need_process = False
-                        break
-                if need_process and timeF[u] <= result:
+                
+                if timeF[u] <= best_dist:
                     self.relax_edges_from_node(u, pq, timeF, u_time, False)
                     
                 visitedF[u] = True
-                if visitedB[u] and timeF[u] + timeB[u] < result:
-                    result = timeF[u] + timeB[u]
+                if visitedB[u] and timeF[u] + timeB[u] < best_dist:
+                    best_dist = timeF[u] + timeB[u]
 
             if pq_rev:
                 u_time, u = heapq.heappop(pq_rev)
-                need_process = True
-                for edge in self.adj_list[u]:
-                    weight = edge[2]
-                    if timeB[edge[1]] + weight < timeB[u]:
-                        need_process = False
-                        break
-                if timeB[u] <= result:
+                
+                if timeB[u] <= best_dist:
                     self.relax_edges_from_node(u, pq_rev, timeB, u_time, True)
                     
                 visitedB[u] = True
-                if visitedF[u] and timeF[u] + timeB[u] < result:
-                    result = timeF[u] + timeB[u]
+                if visitedF[u] and timeF[u] + timeB[u] < best_dist:
+                    best_dist = timeF[u] + timeB[u]
 
-        if result != self.INF:
-            return result
+        if best_dist != self.INF:
+            return best_dist
         return -1
    

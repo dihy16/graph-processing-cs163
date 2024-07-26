@@ -48,22 +48,22 @@ Build edges from scratch
 Input edges from file
 """
 graph.input_edges_from_JSON('data/GraphEdges.json')
-#graph.export_path_2_stops(0, 1)
-"""
-Run dijkstra for all pairs, then export to file
-"""
-# print('Running Dijkstra on all pairs...')
-# start = time.time()
-# graph.dijkstra_all_pairs()
-# print(time.time() - start)
-# graph.export_dijkstra_all_pairs(uniqueIds, 'data/allPairs.json')
+# graph.export_path_2_stops(0, 1)
+# """
+# Run dijkstra for all pairs, then export to file
+# """
+# # print('Running Dijkstra on all pairs...')
+# # start = time.time()
+# # graph.dijkstra_all_pairs()
+# # print(time.time() - start)
+# # graph.export_dijkstra_all_pairs(uniqueIds, 'data/allPairs.json')
 
-"""
-Finding top k stops, then export to file
-"""
-# print('Finding top stops...')
-# kTopStops = graph.find_k_top_stops(uniqueIds, stop_list, 30)
-# stop_query.outputAsJSON(kTopStops, 'data/kStops.json')
+# """
+# Finding top k stops, then export to file
+# """
+# # print('Finding top stops...')
+# # kTopStops = graph.find_k_top_stops(uniqueIds, stop_list, 30)
+# # stop_query.outputAsJSON(kTopStops, 'data/kStops.json')
 
 
 """
