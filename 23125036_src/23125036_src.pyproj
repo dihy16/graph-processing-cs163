@@ -21,9 +21,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="BusTrips.py" />
     <Compile Include="ContractionHierarchies.py" />
     <Compile Include="Graph.py" />
     <Compile Include="LLtoXY.py" />
+    <Compile Include="OSM.py" />
     <Compile Include="OutputData.py" />
     <Compile Include="Path.py" />
     <Compile Include="PathQuery.py" />
@@ -32,6 +34,7 @@
     <Compile Include="Stop.py" />
     <Compile Include="RouteVarQuery.py" />
     <Compile Include="RouteVar.py" />
+    <Compile Include="TransitNodeRouting.py" />
     <Compile Include="_23125036_src.py" />
   </ItemGroup>
   <ItemGroup>

@@ -165,13 +165,14 @@ class ContractionHierarchies:
             if not self.importance_queue or importance <= self.importance_queue[0][0]:
                 for shortcut in self.shortcuts:
                     self.G.add_edge(shortcut)
+                    self.G.shortcuts.append(shortcut)
                     self.shortcuts_for_GeoJSON.append(shortcut)
                 self.update_neighbors_node_level(v)
                 self.rank[v] = rank_count
+                rank_count += 1
             else:
                 heapq.heappush(self.importance_queue, (importance, v))
                 
-            rank_count += 1
         
         self.remove_edges()
         

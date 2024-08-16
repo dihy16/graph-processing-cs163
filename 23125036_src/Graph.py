@@ -4,7 +4,6 @@ from PathQuery import PathQuery
 import heapq
 import json
 import LLtoXY
-import math
 import copy
 
 class Graph:
@@ -15,35 +14,36 @@ class Graph:
         self.trans_adj_list = defaultdict(list)
         self.num_nodes = num_nodes
         self.num_edges = 0
+        self.edges = []
         self.max_outgoing = [0] * num_nodes  # max_outgoing[u] is the weight of the heaviest outgoing edge from u
         self.min_outgoing = [self.INF] * num_nodes
         self.max_incoming = [0] * num_nodes
+        self.shortcuts = []
         
     def find_dist_between_2_stops(self, minDistIdx, pathLngList, pathLatList, curStop):
         y_stop, x_stop = LLtoXY.convertLngLatToXY(curStop.getLng(), curStop.getLat())    
         min_dist = self.INF
         for j1 in range(minDistIdx, len(pathLngList)):
             y1, x1 = LLtoXY.convertLngLatToXY(pathLngList[j1], pathLatList[j1])
-            curDist = math.sqrt((x1 - x_stop) ** 2 + (y1 - y_stop) ** 2)
+            curDist = LLtoXY.getDistance(x1, y1, x_stop, y_stop)
             if curDist < min_dist:
                 min_dist = curDist
                 ind = j1
                         
         path_points = []
-        path_points.append((pathLatList[minDistIdx], pathLngList[minDistIdx]))
+        path_points.append((pathLngList[minDistIdx], pathLatList[minDistIdx]))
                 
         dist = 0
         for idx in range(minDistIdx, ind):
             y1, x1 = LLtoXY.convertLngLatToXY(pathLngList[idx], pathLatList[idx])
             y2, x2 = LLtoXY.convertLngLatToXY(pathLngList[idx + 1], pathLatList[idx + 1])
             dist += LLtoXY.getDistance(x1, y1, x2, y2)
-            path_points.append((pathLatList[idx + 1], pathLngList[idx + 1])) 
+            path_points.append((pathLngList[idx + 1], pathLatList[idx + 1])) 
             
         return dist, ind, path_points
     
     def build_graph(self, route_var_query, stop_query, path_query, stop_indices_dict):
         """Initialize list of edges for the graph from 3 lists: routeVars, stops, and paths"""
-        numEdge = 0
         
         for route_var in route_var_query.RouteVar_list:
             speed = route_var.getDistance() / (route_var.getRunningTime() * 60.00)
@@ -68,15 +68,10 @@ class Graph:
                 endNode = stop_indices_dict[curStop.getStopId()]
                 
                 dist, minDistIdx, path_points = self.find_dist_between_2_stops(minDistIdx, pathLngList, pathLatList, curStop)
-                
                 time_travelled = dist / speed
                 edge = (startNode, endNode, time_travelled, dist, path_points)
-                self.addEdge(edge)
-                
+                self.add_edge(edge)
                 startNode = endNode
-                numEdge += 1
-                
-        self.num_edges = numEdge
         
     def input_edges_from_JSON(self, filename):
         num_edges = 0
@@ -88,7 +83,7 @@ class Graph:
                 self.add_edge(edge)
         self.num_edges = num_edges
                 
-    def output_edges_from_JSON(self, filename):
+    def output_edges_as_JSON(self, filename):
         keys = ['startNode', 'endNode', 'time_travelled', 'dist', 'path_points']
         with open(filename, 'w', encoding='utf8') as fout:
             for u in range(self.num_nodes):
@@ -99,6 +94,9 @@ class Graph:
                     fout.write('\n')
     
     def add_edge(self, edge):
+        self.num_edges += 1
+        self.edges.append(tuple(edge))
+        
         self.adj_list[edge[0]].append(edge)
             
         trans_edge = list(copy.deepcopy(edge))
@@ -222,7 +220,8 @@ class Graph:
         visited = [False] * self.num_nodes
         
         predecessors = {}
-
+        coor_path = {}
+        
         while pq:
             curNode_time, curNode = heapq.heappop(pq)
             
@@ -236,16 +235,44 @@ class Graph:
                     timeTaken[edge[1]] = newTime
                     heapq.heappush(pq, (newTime, edge[1]))
                     predecessors[edge[1]] = curNode
+                    coor_path[edge[1]] = edge[4]
                     
         if timeTaken[goal_node] != self.INF:
-            return timeTaken[goal_node], predecessors
-        return -1, predecessors
+            return timeTaken[goal_node], predecessors, coor_path
+        return -1, predecessors, coor_path
     
-    def export_path_2_stops(self, start_node, goal_node):
-        time_taken, prev_nodes = self.dijkstra_one_pair_with_trace(start_node, goal_node)
-        path = self.form_path(start_node, time_taken, prev_nodes)
-        print(path)
+    def export_path_2_stops(self, start_node, goal_node, uniqueIds, stop_list, filename):
+        time_taken, prev_nodes, coor_path = self.dijkstra_one_pair_with_trace(start_node, goal_node)
         
+        if time_taken == self.INF:
+            return
+        
+        path = []
+        tmp = goal_node
+        
+        stop_query = StopQuery(stop_list)
+        start_stop = stop_query.searchByStopId(uniqueIds[start_node])[0]
+        end_stop = stop_query.searchByStopId(uniqueIds[goal_node])[0]
+        
+        coors = [[end_stop.getLng(), end_stop.getLat()]]
+        stops = [[end_stop.getLng(), end_stop.getLat()]]
+        while tmp != start_node:
+            path.append(uniqueIds[tmp])
+            coors.extend(coor_path[tmp][::-1])
+            tmp = prev_nodes[tmp]
+            stops.append([stop_query.searchByStopId(uniqueIds[tmp])[0].getLng(), stop_query.searchByStopId(uniqueIds[tmp])[0].getLat()])
+            
+        path.append(uniqueIds[start_node])
+        path = path[::-1]
+        
+        coors.append([start_stop.getLng(), start_stop.getLat()])
+        coors = coors[::-1]
+        stops.append([start_stop.getLng(), start_stop.getLat()])
+        stops = stops[::-1]
+        
+        LLtoXY.exportLineStringToGeoJSON(coors, stops, filename)
+        return path, coors
+      
     def find_k_top_stops(self, uniqueIds, stop_list, k=10):
         count = {x: 0 for x in range(self.num_nodes)}
         for node in range(self.num_nodes):
@@ -284,6 +311,9 @@ class Graph:
         visitedB = [False] * self.num_nodes
         
         best_dist = self.INF
+        
+        predecessors = {}
+        coor_path = {}
 
         while pq or pq_rev:
 
