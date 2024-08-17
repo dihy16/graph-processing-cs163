@@ -19,6 +19,9 @@ class Graph:
         self.min_outgoing = [self.INF] * num_nodes
         self.max_incoming = [0] * num_nodes
         self.shortcuts = []
+        self.isSaveEdge = False
+        self.isContracted = False
+        self.isTNRed = False
         
     def find_dist_between_2_stops(self, minDistIdx, pathLngList, pathLatList, curStop):
         y_stop, x_stop = LLtoXY.convertLngLatToXY(curStop.getLng(), curStop.getLat())    
@@ -44,7 +47,6 @@ class Graph:
     
     def build_graph(self, route_var_query, stop_query, path_query, stop_indices_dict):
         """Initialize list of edges for the graph from 3 lists: routeVars, stops, and paths"""
-        
         for route_var in route_var_query.RouteVar_list:
             speed = route_var.getDistance() / (route_var.getRunningTime() * 60.00)
             
@@ -71,17 +73,15 @@ class Graph:
                 time_travelled = dist / speed
                 edge = (startNode, endNode, time_travelled, dist, path_points)
                 self.add_edge(edge)
+                 
                 startNode = endNode
         
     def input_edges_from_JSON(self, filename):
-        num_edges = 0
         with open(filename, 'r', encoding='utf8') as filein:
             for line in filein:
                 edge = json.loads(line)
-                num_edges += 1
                 edge = (edge['startNode'], edge['endNode'], edge['time_travelled'], edge['dist'], edge['path_points'])
                 self.add_edge(edge)
-        self.num_edges = num_edges
                 
     def output_edges_as_JSON(self, filename):
         keys = ['startNode', 'endNode', 'time_travelled', 'dist', 'path_points']
@@ -94,12 +94,13 @@ class Graph:
                     fout.write('\n')
     
     def add_edge(self, edge):
-        self.num_edges += 1
         self.edges.append(tuple(edge))
-        
-        self.adj_list[edge[0]].append(edge)
+        new_edge = list(copy.deepcopy(edge))
+        new_edge.append(self.num_edges)
+        self.num_edges += 1
+        self.adj_list[edge[0]].append(tuple(new_edge))
             
-        trans_edge = list(copy.deepcopy(edge))
+        trans_edge = list(copy.deepcopy(new_edge))
         trans_edge[0], trans_edge[1] = trans_edge[1], trans_edge[0]
         self.trans_adj_list[trans_edge[0]].append(tuple(trans_edge))
             
@@ -113,7 +114,7 @@ class Graph:
         if self.min_outgoing[edge[0]] > w:
             self.min_outgoing[edge[0]] = w
    
-    def relax_edges_from_node(self, curNode, pq, timeTaken, node_time, isTrans):
+    def relax_edges_from_node(self, curNode, pq, timeTaken, node_time, isTrans, trace=None, coor=None):
         for edge in self.trans_adj_list[curNode] if isTrans else self.adj_list[curNode]:
             if edge[1] not in timeTaken:
                 timeTaken[edge[1]] = self.INF
@@ -121,6 +122,10 @@ class Graph:
             if timeTaken[edge[1]] > node_time + edge[2]:
                 timeTaken[edge[1]] = node_time + edge[2]
                 heapq.heappush(pq, (node_time + edge[2], edge[1]))  
+                if trace is not None:
+                    trace[edge[1]] = curNode
+                if coor is not None:
+                    coor[edge[1]]= edge[4]
                 
     def dijkstra_one_pair(self, start_node, goal_node):
         timeTaken = {}
@@ -182,6 +187,39 @@ class Graph:
                 paths[idx] = path[::-1]
         return paths
    
+    def build_path_1d(self, start_node, goal_node, uniqueIds, prev_nodes, coor_path):
+        path = []
+        coors = []
+        tmp = goal_node
+        while tmp != start_node:
+            path.append(uniqueIds[tmp])
+            coors.extend(coor_path[tmp][::-1])
+            tmp = prev_nodes[tmp]
+        path.append(uniqueIds[start_node])
+        return path[::-1], coors[::-1]
+    
+    def build_path_bidirect(self, intersect, uniqueIds, forward_trace, backward_trace):
+        path = []
+        coors = []
+        tmp = forward_trace[intersect]
+        while tmp != -1:
+            edge = self.edges[tmp]
+            path.append(uniqueIds[edge[0]])
+            path.append(uniqueIds[edge[1]])
+            coors.extend(edge[4][::-1])
+            tmp = forward_trace[edge[0]]
+        path = path[::-1]
+        path.append(intersect)
+        coors = coors[::-1]
+        
+        tmp = backward_trace[intersect]
+        while tmp != -1:
+            edge = self.edges[tmp]
+            path.append(uniqueIds[edge[1]])
+            coors.extend(edge[4])
+            tmp = backward_trace[edge[1]]
+        return path, coors
+
     def dijkstra(self, start_node):
         timeTaken = {}
         timeTaken[start_node] = 0
@@ -212,11 +250,13 @@ class Graph:
                         json.dump((uniqueIds[u], uniqueIds[v], result[v]), fout, ensure_ascii=False)
                         fout.write('\n')
     
-    def dijkstra_one_pair_with_trace(self, start_node, goal_node):
+    def dijkstra_one_pair_with_trace(self, start_node, goal_node, uniqueIds):
         timeTaken = {x: self.INF for x in range(self.num_nodes)}
         timeTaken[start_node] = 0
+        
         pq = []
         heapq.heappush(pq, (0, start_node))
+        
         visited = [False] * self.num_nodes
         
         predecessors = {}
@@ -224,7 +264,6 @@ class Graph:
         
         while pq:
             curNode_time, curNode = heapq.heappop(pq)
-            
             if curNode == goal_node:
                 break
             if visited[curNode]:
@@ -238,40 +277,47 @@ class Graph:
                     coor_path[edge[1]] = edge[4]
                     
         if timeTaken[goal_node] != self.INF:
-            return timeTaken[goal_node], predecessors, coor_path
-        return -1, predecessors, coor_path
+            path, coors = self.build_path_1d(start_node, goal_node, uniqueIds, predecessors, coor_path)
+            return timeTaken[goal_node], path, coors
+        return -1, [], []
     
-    def export_path_2_stops(self, start_node, goal_node, uniqueIds, stop_list, filename):
-        time_taken, prev_nodes, coor_path = self.dijkstra_one_pair_with_trace(start_node, goal_node)
+    def export_path_bidirect(self, start_node, goal_node, uniqueIds, stop_list):
+        time_taken, _, coors = self.bidirectional_dijkstra(start_node, goal_node, uniqueIds)
         
-        if time_taken == self.INF:
-            return
-        
-        path = []
-        tmp = goal_node
+        if time_taken == -1:
+            return [], []
         
         stop_query = StopQuery(stop_list)
         start_stop = stop_query.searchByStopId(uniqueIds[start_node])[0]
         end_stop = stop_query.searchByStopId(uniqueIds[goal_node])[0]
         
-        coors = [[end_stop.getLng(), end_stop.getLat()]]
-        stops = [[end_stop.getLng(), end_stop.getLat()]]
-        while tmp != start_node:
-            path.append(uniqueIds[tmp])
-            coors.extend(coor_path[tmp][::-1])
-            tmp = prev_nodes[tmp]
-            stops.append([stop_query.searchByStopId(uniqueIds[tmp])[0].getLng(), stop_query.searchByStopId(uniqueIds[tmp])[0].getLat()])
-            
-        path.append(uniqueIds[start_node])
-        path = path[::-1]
+        # coors.append([end_stop.getLng(), end_stop.getLat()])
+        # coors.insert(0, [start_stop.getLng(), start_stop.getLat()])
         
-        coors.append([start_stop.getLng(), start_stop.getLat()])
-        coors = coors[::-1]
+        stops = []
         stops.append([start_stop.getLng(), start_stop.getLat()])
-        stops = stops[::-1]
+        stops.append([end_stop.getLng(), end_stop.getLat()])
         
-        LLtoXY.exportLineStringToGeoJSON(coors, stops, filename)
-        return path, coors
+        return coors, stops
+    
+    def export_path_2_stops(self, start_node, goal_node, uniqueIds, stop_list):
+        time_taken, _, coors = self.dijkstra_one_pair_with_trace(start_node, goal_node, uniqueIds)
+        
+        if time_taken == -1:
+            return [], []
+        
+        stop_query = StopQuery(stop_list)
+        start_stop = stop_query.searchByStopId(uniqueIds[start_node])[0]
+        end_stop = stop_query.searchByStopId(uniqueIds[goal_node])[0]
+        
+        # coors.append([end_stop.getLng(), end_stop.getLat()])
+        # coors.insert(0, [start_stop.getLng(), start_stop.getLat()])
+        
+        stops = []
+        stops.append([start_stop.getLng(), start_stop.getLat()])
+        stops.append([end_stop.getLng(), end_stop.getLat()])
+        
+        return coors, stops
       
     def find_k_top_stops(self, uniqueIds, stop_list, k=10):
         count = {x: 0 for x in range(self.num_nodes)}
@@ -295,7 +341,7 @@ class Graph:
             top_stops_list.append(stop)
         return top_stops_list
  
-    def bidirectional_dijkstra(self, startNode, goalNode):
+    def bidirectional_dijkstra(self, startNode, goalNode, uniqueIds):
         timeF = {}
         timeF[startNode] = 0
         timeB = {}
@@ -310,34 +356,56 @@ class Graph:
         visitedF = [False] * self.num_nodes
         visitedB = [False] * self.num_nodes
         
+        intersect = None
         best_dist = self.INF
         
-        predecessors = {}
-        coor_path = {}
+        f_trace = [-1 for _ in range(self.num_nodes)]
+        b_trace = [-1 for _ in range(self.num_nodes)]
+        
+        search_space = 0
 
         while pq or pq_rev:
 
             if pq:
                 u_time, u = heapq.heappop(pq)
+                search_space += 1
                 
                 if timeF[u] <= best_dist:
-                    self.relax_edges_from_node(u, pq, timeF, u_time, False)
+                    for edge in self.adj_list[u]:
+                        if edge[1] not in timeF:
+                            timeF[edge[1]] = self.INF
+                
+                        if timeF[edge[1]] > u_time + edge[2]:
+                            timeF[edge[1]] = u_time + edge[2]
+                            heapq.heappush(pq, (u_time + edge[2], edge[1]))  
+                            f_trace[edge[1]] = edge[5]
                     
                 visitedF[u] = True
                 if visitedB[u] and timeF[u] + timeB[u] < best_dist:
                     best_dist = timeF[u] + timeB[u]
+                    intersect = u
 
             if pq_rev:
                 u_time, u = heapq.heappop(pq_rev)
+                search_space += 1
                 
                 if timeB[u] <= best_dist:
-                    self.relax_edges_from_node(u, pq_rev, timeB, u_time, True)
-                    
+                    for edge in self.trans_adj_list[u]:
+                        if edge[1] not in timeB:
+                            timeB[edge[1]] = self.INF
+                
+                        if timeB[edge[1]] > u_time + edge[2]:
+                            timeB[edge[1]] = u_time + edge[2]
+                            heapq.heappush(pq_rev, (u_time + edge[2], edge[1]))  
+                            b_trace[edge[1]] = edge[5]
+                            
                 visitedB[u] = True
                 if visitedF[u] and timeF[u] + timeB[u] < best_dist:
                     best_dist = timeF[u] + timeB[u]
-
+                    intersect = u
+                    
         if best_dist != self.INF:
-            return best_dist
-        return -1
+            path, coor = self.build_path_bidirect(intersect, uniqueIds, f_trace, b_trace)
+            return best_dist, path, coor
+        return -1, [], []
    

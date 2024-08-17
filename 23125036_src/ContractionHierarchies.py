@@ -96,19 +96,6 @@ class ContractionHierarchies:
                     need_shortcut = True
                     if not self.is_init_queue:
                         is_new_shortcut = True
-                        # dist_u = incoming_edge[3]
-                        # path_points_u = incoming_edge[4]
-                        # dist_w = outgoing_edge[3]
-                        # path_points_w = outgoing_edge[4]
-                        
-                        # for i in range(len(self.shortcuts)):
-                        #     if u != self.shortcuts[i][0] or w != self.shortcuts[i][1]:
-                        #         continue
-                        #     is_new_shortcut = False
-                        #     if self.shortcuts[i][2] > weight_u + weight_w:
-                        #         self.shortcuts[i] = (u, w, weight_u + weight_w, dist_u + dist_w, path_points_u + path_points_w)
-                        # if is_new_shortcut:
-                        #     self.shortcuts.append((u, w, weight_u + weight_w, dist_u + dist_w, path_points_u + path_points_w))
                         for i, shortcut in enumerate(self.shortcuts):
                             if incoming_edge[1] == shortcut[0] and outgoing_edge[1] == shortcut[1]:
                                 is_new_shortcut = False
@@ -155,7 +142,6 @@ class ContractionHierarchies:
 
     def preprocess_graph(self):
         self.initialize_nodes_queue()
-        
         self.is_init_queue = False
         rank_count = 0
         while self.importance_queue:
@@ -164,6 +150,7 @@ class ContractionHierarchies:
                 
             if not self.importance_queue or importance <= self.importance_queue[0][0]:
                 for shortcut in self.shortcuts:
+                   #print(shortcut)
                     self.G.add_edge(shortcut)
                     self.G.shortcuts.append(shortcut)
                     self.shortcuts_for_GeoJSON.append(shortcut)
@@ -173,7 +160,6 @@ class ContractionHierarchies:
             else:
                 heapq.heappush(self.importance_queue, (importance, v))
                 
-        
         self.remove_edges()
         
     def exportShortcutsToGeoJSON(self):

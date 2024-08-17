@@ -14,14 +14,22 @@ def convertLngLatToXY(Lng, Lat):
 def getDistance(x1, y1, x2, y2):
     return math.sqrt(((x1 - x2) ** 2) + ((y1 - y2) ** 2))
 
-def exportLineStringToGeoJSON(coordinates, stops, filename):
-    line_feature = geojson.Feature(geometry=geojson.LineString(coordinates))
+def export_line_string_to_GeoJSON(coordinates_list, stops_list, filename, color_list, width_list):
+    features = []
     
-    points = []
-    for s in stops:
-        point_feature = geojson.Feature(geometry=geojson.Point(s))
-        points.append(point_feature)
+    for i in range(len(coordinates_list)):
+        line_feature = geojson.Feature(
+            geometry=geojson.LineString(coordinates_list[i]), 
+            properties={"stroke": color_list[i], "stroke-width": width_list[i]}
+        )
+        features.append(line_feature)
+    
+    for stops in stops_list:
+        for s in stops:
+            point_feature = geojson.Feature(geometry=geojson.Point(s))
+            features.append(point_feature)
         
-    feature_collection = geojson.FeatureCollection([line_feature] + points)
+    feature_collection = geojson.FeatureCollection(features)
+    
     with open(filename, 'w') as f:
         geojson.dump(feature_collection, f)
