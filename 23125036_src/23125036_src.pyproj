@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ba521148-3fa3-4e3b-9ed8-d5337908e57c</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>_23125036_src.py</StartupFile>
+    <StartupFile>OSM.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,8 +21,8 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="BusTrips.py" />
     <Compile Include="ContractionHierarchies.py" />
+    <Compile Include="EdgeMatrix.py" />
     <Compile Include="Graph.py" />
     <Compile Include="LLtoXY.py" />
     <Compile Include="OSM.py" />
@@ -34,6 +34,7 @@
     <Compile Include="Stop.py" />
     <Compile Include="RouteVarQuery.py" />
     <Compile Include="RouteVar.py" />
+    <Compile Include="TemporalGraph.py" />
     <Compile Include="TransitNodeRouting.py" />
     <Compile Include="_23125036_src.py" />
   </ItemGroup>
